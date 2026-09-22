@@ -1,11 +1,11 @@
 # vlm-filings-serving design
 
-Date: 2026-09-15. Revised 2026-09-18; see Changes at the end.
+Date: 2026-09-15. Revised 2026-09-18 and 2026-09-22; see Changes at the end.
 Status: Proposed. Nothing in this document is a claim until a verdict on a pushed SHA backs it.
 Codename: traverse. Repository: hossainpazooki/vlm-filings-serving.
 Discipline: this design follows DATUM, a public governing text; the rules it assumes are restated by name in docs/discipline.md.
 
-Seven decisions below are marked *(pending review)*. The build plan introduced them on 2026-09-15 and they await the author's ruling; Open items lists them.
+Three decisions below are still marked *(pending review)*. The build plan introduced seven on 2026-09-15; four were ruled on 2026-09-22 (Changes), and the three that remain are deferred until a cloud lane exists; Open items lists them.
 
 ## Purpose
 
@@ -46,7 +46,7 @@ The sweep matrix is declared as three sub-matrices before any cell runs: core, h
 
 Escalation is a declared policy, never a learned router: a seeded selection of the fixed request set at the declared rate, drawn uniformly over questions (random) or over whole documents until the rate is met (clustered). Nothing about a handoff transfers cache between models. Per the KV-transfer research program's record, the small model's cache is treated as worthless to the large one, and the large model pays full prefill on first contact with each escalated document. That is the assumption the cell prices; it is cited, not re-measured.
 
-VANTAGE gold is read from a pinned local export keyed by accession number, with the export's row count, content hash and as-of instant recorded in the serve row's params. No code dependency on the PARALLAX reader is taken (Open items). *(pending review)* The export's as-of equals the run's asof_date: gold is point-in-time, and a fact restated after the as-of would otherwise be compared against a page rendered before it.
+VANTAGE gold is read from a pinned local export keyed by accession number, with the export's row count, content hash and as-of instant recorded in the serve row's params. No code dependency on the PARALLAX reader is taken (Open items). The export's as-of equals the run's asof_date: gold is point-in-time, and a fact restated after the as-of would otherwise be compared against a page rendered before it.
 
 ## Shape
 
@@ -113,11 +113,11 @@ Rows that CI can regenerate (the synthetic-filings lane) are build output under 
 
 fetch-throughput: sustained S3-to-disk throughput above the floor for the instance type. Fixture twin: a throttled throughput figure. Runtime twin: a tc-throttled run. The local floor is a smoke floor. Staged PDFs are small, so the g5 floor bounds a smaller transfer than video would, and the row's scope says so.
 
-admission-asof (manifest level): for a run declared with an asof_date, every object in the fetch manifest was accepted at or before that date. *(pending review)* The boundary is 23:59:59 of asof_date in America/New_York, the acceptance clock's zone. Check: future_accepted. Fixture twin: one filing accepted after the date. This is an admission gate on the data plane, not a serving gate. It says the served corpus is as-of consistent at the declared date and nothing more.
+admission-asof (manifest level): for a run declared with an asof_date, every object in the fetch manifest was accepted at or before that date. The boundary is 23:59:59 of asof_date in America/New_York, the acceptance clock's zone. Check: future_accepted. Fixture twin: one filing accepted after the date. This is an admission gate on the data plane, not a serving gate. It says the served corpus is as-of consistent at the declared date and nothing more.
 
 decode-bottleneck: classifies the run as I/O-bound or decode-bound by the rule in Shape. This is a classification, not a pass; the check is that the recorded classification agrees with a recomputation from the raw timings. Fixture twin: a misclassified row. Runtime twin: a cgroup io.max run that must classify I/O-bound. The synthetic-scaling lane opens only on decode-bound. Pages per second is recorded per DPI bucket as a descriptive metric.
 
-pack-shape: every page matches its declared dtype and lies inside the declared pixel bounds on a multiple of the patch factor; the page count equals the decode page count; the decode stage's re-rasterised sample matched hash for hash; the container image digest is recorded. Checks: shape_mismatch, count_mismatch, determinism_mismatch, image_digest_recorded. Fixture twins: one truncated page (sets the first two), one perturbed sample hash (sets the third), one blanked digest (sets the fourth). *(pending review)* The fourth twin is kept because a check no twin has made fail is not credited.
+pack-shape: every page matches its declared dtype and lies inside the declared pixel bounds on a multiple of the patch factor; the page count equals the decode page count; the decode stage's re-rasterised sample matched hash for hash; the container image digest is recorded. Checks: shape_mismatch, count_mismatch, determinism_mismatch, image_digest_recorded. Fixture twins: one truncated page (sets the first two), one perturbed sample hash (sets the third), one blanked digest (sets the fourth). The fourth twin is kept because a check no twin has made fail is not credited.
 
 serve-sweep-complete: one check per declared sub-matrix: core_incomplete, handoff_incomplete, extended_incomplete. A hole makes the sweep row RED, so its twin can be shown red as planted. The gates that depend on a complete sub-matrix are UNEVALUABLE until it is complete: a missing core cell leaves the regression and cache-economics gates with nothing to evaluate, and a missing handoff or extended cell makes only the gates over that sub-matrix UNEVALUABLE. Fixture twins: one hole per declared sub-matrix.
 
@@ -127,7 +127,7 @@ serve-cache-correctness: *(pending review)* at max_num_seqs 1, for every request
 
 serve-cache-economics: in shared mode the block-level hit rate must be at or above the floor, and the shared-evicting cell must show a lower hit rate and a higher cost per thousand questions than the shared cell, per quant and max_num_seqs. Checks: hit_rate_below_floor, evicting_not_worse. Fixture twins: the shared hit rate collapsed; evicting equal to shared. UNEVALUABLE when the server exposes no prefix-cache counters.
 
-serve-agreement: extracted figures are aligned to gold facts by (accession number, tag, period end date, quarters), normalised by the statement's stated scale, USD only, and compared at value level. Each cell's agreement rate must be at or above the floor. Checks: value_mismatch, unaligned. Fixture twins: a gold copy with planted wrong values; one extracted item with no gold fact. *(pending review)* The aligner ships with its own positive and negative controls, a hand-verified fixture of documents and tags on which alignment is known, that must score fully and must drop for exactly the planted reasons on a mismatch copy. It is a CI-reproducible build task, not a day-0 chore, in the pattern of the ledger checker's controls. A low agreement rate on a document outside the controls may be the filer's inconsistency rather than the model's; the row reports the rate, and the page says which of the two it cannot distinguish.
+serve-agreement: extracted figures are aligned to gold facts by (accession number, tag, period end date, quarters), normalised by the statement's stated scale, USD only, and compared at value level. Each cell's agreement rate must be at or above the floor. Checks: value_mismatch, unaligned. Fixture twins: a gold copy with planted wrong values; one extracted item with no gold fact. The aligner ships with its own positive and negative controls, a hand-verified fixture of documents and tags on which alignment is known, that must score fully and must drop for exactly the planted reasons on a mismatch copy. It is a CI-reproducible build task, not a day-0 chore, in the pattern of the ledger checker's controls. A low agreement rate on a document outside the controls may be the filer's inconsistency rather than the model's; the row reports the rate, and the page says which of the two it cannot distinguish.
 
 serve-handoff-economics (surface serve-handoff): at equal escalation rate, the clustered cell's pipeline cost per thousand questions must be below the random cell's by at least the margin in floors.json, and no pipeline cost may fall below the small-only cost. Checks: clustering_no_saving, pipeline_below_small_only. Fixture twins: clustered cost equal to random; one pipeline cost planted below small-only. *(pending review)* The pipeline cost is not required to stay below the large-only cost. When prefill dominates, random escalation at 0.3 touches most documents and can cost more than sending everything to the large model; that is a finding, reported as the descriptive ratio pipeline_over_large_only, not a defect. The agreement uplift on escalated items is reported, descriptive and without a floor: with the escalated count in the low hundreds it is not a claim.
 
@@ -151,7 +151,7 @@ Any of these strings found inside a row fails the checker.
 
 ## Floors
 
-Floors and tolerances live in gates/floors.json. They are keyed by instance type and, where the unit needs it, by DPI bucket. Every entry carries a source string saying where the number came from. A run on an instance type with no floor is UNEVALUABLE, not FAIL. *(pending review)* Every floor is declared before any run with its derivation, and none is set from a run's own numbers. The fetch floor on g5.xlarge is a declared fraction of the provisioned volume throughput, with that volume's documentation cited. The hit-rate floor is derived from the request set's shape. The agreement, clustering and regression margins are chosen numbers, and their sources say so. None of them yet has a cited prior figure, and each is replaced when one exists.
+Floors and tolerances live in gates/floors.json. They are keyed by instance type and, where the unit needs it, by DPI bucket. Every entry carries a source string saying where the number came from. A run on an instance type with no floor is UNEVALUABLE, not FAIL. Every floor is declared before any run with its derivation, and none is set from a run's own numbers. The fetch floor on g5.xlarge is a declared fraction of the provisioned volume throughput, with that volume's documentation cited. The hit-rate floor is derived from the request set's shape. The agreement, clustering and regression margins are chosen numbers, and their sources say so. None of them yet has a cited prior figure, and each is replaced when one exists. A floor whose value has no cited prior figure is marked provisional in the floors file, and every row it judges carries that flag under its params; the floor still judges the run.
 
 ## Ledger and status
 
@@ -249,14 +249,12 @@ Staging under the fair-access limit is slow and belongs to day 0, not to any tim
 
 ## Open items
 
-The seven decisions marked *(pending review)*, each introduced by the build plan on 2026-09-15:
+The three decisions still marked *(pending review)*, introduced by the build plan on 2026-09-15 and deferred until a cloud lane exists:
 1. correctness identity at max_num_seqs 1 only;
-2. gold as-of equal to asof_date, with the boundary in America/New_York;
 3. the hit rate as the overall counter delta, named as an upper bound on the document portion;
-4. the aligner and its controls as a build task;
-5. floors declared before any run, never set from one;
-6. the pack surface's fourth twin;
 7. the handoff gate's lower bound only.
+
+Decisions 2, 4, 5 and 6 were ruled on 2026-09-22; see Changes.
 
 Name the target posting. Until it is named, the Purpose paragraph defines the reader by function; the sentence is revised in place with a date when the posting is chosen.
 
@@ -273,6 +271,8 @@ Whether the retained-bucket alternative is preferable to force_destroy for reade
 ## Changes
 
 This is a governing text for the repository, so it is revised in the body; this section names what changed and why.
+
+2026-09-22, four decisions ruled by the author. Decision 2, the as-of boundary at 23:59:59 of asof_date in America/New_York: as written. Decision 4, the aligner and its controls as a build task: as written. Decision 6, the pack surface's fourth twin: kept, as written. Decision 5, floors declared before any run: as written, with one sentence added to Floors: a floor with a stated derivation but no cited prior figure satisfies the rule, is marked provisional, and the rows it judges say so. Markers removed from those four paragraphs. Decisions 1, 3 and 7 stay open until a cloud lane exists.
 
 2026-09-18, repository created fresh. The repository is new as hossainpazooki/vlm-filings-serving; the gameplay-era repository was deleted, and its documents are archived outside this repository. This design is now standalone. It previously revised the gameplay-era design in place, and it folds in the sections it had inherited: the driver and manifest-boundary paragraphs of Shape, the verdict row's field table, the twin and status-vocabulary paragraphs of Gates, Ledger and status, and Infrastructure. The design was reconciled with the build plan it drives in three places:
 - serve-sweep-complete carries one check per declared sub-matrix and goes RED on a hole, with the dependent gates UNEVALUABLE; this replaces "a missing core cell makes the serve surface UNEVALUABLE";
