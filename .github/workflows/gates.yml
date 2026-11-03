@@ -1,0 +1,25 @@
+name: gates
+on:
+  push:
+  pull_request:
+jobs:
+  lane1:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          # 3.12: the floor in pyproject. pypdfium2 wheels bundle pdfium, so no apt step.
+          python-version: "3.12"
+      - uses: actions/setup-node@v4
+        with:
+          # The vendored shared checker under gates/ is Node with no dependencies; 20 is its floor.
+          # Pinned rather than taken from the runner image, so the version is a choice on record.
+          node-version: "20"
+      - run: python -m pip install -e ".[dev]"
+      - name: run gates
+        env:
+          TRAVERSE_RUNNER: ci   # the shared row's conventional runner name for CI
+        # Interim gate step (plan Task 1.1a, amendment 2026-11-03): the suite alone, until
+        # Task 1.11 creates gates/run.sh and swaps this line to `sh gates/run.sh`.
+        run: python -m pytest -q
