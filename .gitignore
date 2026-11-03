@@ -1,7 +1,9 @@
 .venv/
 __pycache__/
 *.pyc
+*.egg-info/
+gates/out/
+data/
 .terraform/
 *.tfstate*
 .env
-data/

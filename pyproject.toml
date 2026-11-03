@@ -1,0 +1,25 @@
+[project]
+name = "traverse"
+version = "0.2.0"
+description = "Rendered SEC filings to page tensors to a served VLM, with every number behind a gate that has been seen red"
+requires-python = ">=3.12"
+dependencies = [
+    "numpy>=2",
+    "pypdfium2>=4",
+    "pillow>=10",
+    "tzdata>=2024.1",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8"]
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["traverse*", "gates*"]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]
