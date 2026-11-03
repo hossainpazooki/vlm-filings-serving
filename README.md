@@ -3,10 +3,12 @@
 Rendered SEC filings to page tensors to a served vision-language model, with
 every number behind a gate that has been seen to fail.
 
-**State: design only.** No pipeline code, gates, or infrastructure exist in
-this repository yet. The design is `docs/design.md`; the gate discipline
-every document here refers to is restated in `docs/discipline.md`; dated
-state and open items are in `docs/handoff/`.
+**State: skeleton, no gates yet.** The tree holds Part 1's first task: the
+package with its canonical-bytes and hashing module (`traverse/canon.py`) and
+that module's tests. No pipeline stage, no gate, no CI workflow and no
+STATUS.md exist yet, so nothing is claimable. The design is `docs/design.md`;
+the gate discipline every document here refers to is restated in
+`docs/discipline.md`; dated state and open items are in `docs/handoff/`.
 
 ## What it measures
 
@@ -49,7 +51,7 @@ submitted.
 
 This repository follows DATUM, a public governing text, restated for this
 tree in `docs/discipline.md`. Where the design stands against each named
-rule, before any code:
+rule; the `code` column names what refuses it, and nothing does yet:
 
 | rule | design | code |
 |---|---|---|
