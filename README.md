@@ -5,8 +5,9 @@ every number behind a gate that has been seen to fail.
 
 **State: skeleton, no gates yet.** The tree holds Part 1's first task: the
 package with its canonical-bytes and hashing module (`traverse/canon.py`) and
-that module's tests. No pipeline stage, no gate, no CI workflow and no
-STATUS.md exist yet, so nothing is claimable. The design is `docs/design.md`;
+that module's tests, plus a workflow that runs those tests on every push. No
+pipeline stage, no gate and no STATUS.md exist yet, so nothing is claimable.
+The design is `docs/design.md`;
 the gate discipline every document here refers to is restated in
 `docs/discipline.md`; dated state and open items are in `docs/handoff/`.
 
